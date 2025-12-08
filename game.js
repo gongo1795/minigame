@@ -10,10 +10,14 @@ let score = 0;
 let scoreText;
 let gameOver = false;
 
-const PLATFORM_SCALE = 0.4; // 발판 크기
-const PLAYER_SCALE   = 0.25; // 펭귄 크기
-const STAR_SCALE     = 0.18; // 물고기 크기
-const BOMB_SCALE     = 0.25; // 얼음 가시 크기
+let gameWon = false;
+let restartKey;
+let instructionsText;
+
+const PLATFORM_SCALE = 0.4;
+const PLAYER_SCALE   = 0.25;
+const STAR_SCALE     = 0.18;
+const BOMB_SCALE     = 0.25;
 
 
 // ==============================
@@ -56,17 +60,15 @@ function preload () {
 function create () {
     // 1) 배경
     this.add.image(400, 300, 'sky')
-        .setDisplaySize(800, 600);   // 캔버스 크기에 맞게 늘이기
+        .setDisplaySize(800, 600);
 
-    // 2) 플랫폼(발판)
+    // 2) 플랫폼
     platforms = this.physics.add.staticGroup();
 
-    // 바닥
     platforms.create(400, 580, 'platform')
         .setScale(PLATFORM_SCALE)
         .refreshBody();
 
-    // 공중 발판들
     platforms.create(650, 420, 'platform')
         .setScale(PLATFORM_SCALE)
         .refreshBody();
@@ -79,7 +81,7 @@ function create () {
         .setScale(PLATFORM_SCALE)
         .refreshBody();
 
-    // 3) 플레이어(펭귄)
+    // 3) 플레이어
     player = this.physics.add.sprite(100, 450, 'dude');
     player.setScale(PLAYER_SCALE);
     player.setBounce(0.2);
@@ -87,12 +89,13 @@ function create () {
 
     // 4) 키 입력
     cursors = this.input.keyboard.createCursorKeys();
+    restartKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
-    // 5) 물고기(아이템) - 개수 줄이고 간격 넓히기
+    // 5) 물고기 (5개만)
     stars = this.physics.add.group({
         key: 'star',
-        repeat: 4,                           // 11 → 4 로 줄이기
-        setXY: { x: 120, y: 50, stepX: 150 } // 간격 70 → 150
+        repeat: 4,                           // 총 5개
+        setXY: { x: 150, y: 80, stepX: 140 } // 간격 넓게
     });
 
     stars.children.iterate(function (child) {
@@ -100,14 +103,19 @@ function create () {
         child.setScale(STAR_SCALE);
     });
 
-    // 6) 얼음 가시(적)
+    // 6) 얼음 가시
     bombs = this.physics.add.group();
 
-    // 7) 점수 표시
+    // 7) 점수 & 설명 텍스트
     scoreText = this.add.text(16, 16, '점수: 0', {
-        fontSize: '32px',
+        fontSize: '28px',
         fill: '#ffffff'
     });
+
+    instructionsText = this.add.text(16, 52,
+        '← → 이동, ↑ 점프, 모든 물고기를 먹으면 클리어, R = 다시 시작',
+        { fontSize: '18px', fill: '#ffffff' }
+    );
 
     // 8) 충돌 설정
     this.physics.add.collider(player, platforms);
@@ -122,24 +130,33 @@ function create () {
 // 4. 매 프레임 업데이트
 // ==============================
 function update () {
-    if (gameOver) return;
+    if (gameOver || gameWon) {
+        // R 키로 재시작
+        if (Phaser.Input.Keyboard.JustDown(restartKey)) {
+            this.scene.restart();
+            gameOver = false;
+            gameWon = false;
+            score = 0;
+        }
+        return;
+    }
 
-    // 좌우 이동
+    // 움직임 범위 안에서만 움직이도록 (기본 설정)
     if (cursors.left.isDown) {
-        player.setVelocityX(-160);
-        player.setFlipX(true);   // 왼쪽 볼 때 뒤집기
+        player.setVelocityX(-220);   // 좀 더 빠르게
+        player.setFlipX(true);
     } else if (cursors.right.isDown) {
-        player.setVelocityX(160);
-        player.setFlipX(false);  // 오른쪽
+        player.setVelocityX(220);
+        player.setFlipX(false);
     } else {
         player.setVelocityX(0);
     }
 
-    // 점프 (바닥에 닿아있을 때만)
     if (cursors.up.isDown && player.body.touching.down) {
         player.setVelocityY(-330);
     }
 }
+
 
 // ==============================
 // 5. 물고기 먹었을 때
@@ -150,12 +167,15 @@ function collectStar (player, star) {
     score += 10;
     scoreText.setText('점수: ' + score);
 
-    // 남은 물고기가 없으면 다시 생성 + 얼음 가시 추가
+    // 아직 먹지 않은 물고기가 남아 있나?
     if (stars.countActive(true) === 0) {
-        stars.children.iterate(function (child) {
-            child.enableBody(true, child.x, 0, true, true);
-        });
+        // ✅ 모든 물고기를 다 먹었으면 → 클리어
+        gameWon = true;
+        this.physics.pause();
 
+        instructionsText.setText('클리어! R 키를 눌러 다시 시작');
+    } else {
+        // 아직 남아 있으면 얼음 가시 하나 생성 (난이도용)
         const x = (player.x < 400)
             ? Phaser.Math.Between(400, 800)
             : Phaser.Math.Between(0, 400);
@@ -177,5 +197,6 @@ function hitBomb (player, bomb) {
     player.setTint(0xff0000);
     gameOver = true;
 
-    alert('Game Over! 점수: ' + score);
+    instructionsText.setText('Game Over! R 키를 눌러 다시 시작');
 }
+
