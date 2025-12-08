@@ -1,29 +1,33 @@
-// ==============================
-// 0. 전역 변수
-// ==============================
+// =====================================
+// 0. 전역 변수 & 상수
+// =====================================
 let player;
-let platforms;
+let ground;
 let cursors;
-let stars;
-let bombs;
+let spaceKey;
+let restartKey;
+
+let fishes;  // 보너스 물고기
+let bombs;   // 얼음 가시
 let score = 0;
 let scoreText;
+let infoText;
 let gameOver = false;
 
-let gameWon = false;
-let restartKey;
-let instructionsText;
+let bg;      // 스크롤되는 배경
 
-// 스케일(이미지 크기 조절용)
-const PLATFORM_SCALE = 0.6;   // 바닥/발판 크기
-const PLAYER_SCALE   = 0.25;  // 펭귄 크기
-const STAR_SCALE     = 0.18;  // 물고기 크기
-const BOMB_SCALE     = 0.22;  // 얼음 가시 크기
+const SCROLL_SPEED   = 260;   // 배경/장애물 왼쪽으로 흐르는 속도
+const JUMP_VELOCITY  = -420;  // 점프 힘
+const PLAYER_SCALE   = 0.25;
+const GROUND_SCALE_X = 2.5;   // 바닥 가로 스케일
+const GROUND_SCALE_Y = 0.9;
+const FISH_SCALE     = 0.20;
+const BOMB_SCALE     = 0.22;
 
 
-// ==============================
-// 1. Phaser 게임 설정
-// ==============================
+// =====================================
+// 1. Phaser 기본 설정
+// =====================================
 const config = {
     type: Phaser.AUTO,
     width: 800,
@@ -31,7 +35,7 @@ const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 300 },
+            gravity: { y: 900 }, // 중력
             debug: false
         }
     },
@@ -45,175 +49,171 @@ const config = {
 const game = new Phaser.Game(config);
 
 
-// ==============================
+// =====================================
 // 2. 이미지 로드
-// ==============================
+// =====================================
 function preload () {
-    this.load.image('sky', 'assets/sky.png');          // 배경
-    this.load.image('platform', 'assets/platform.png');// 발판/바닥
-    this.load.image('star', 'assets/star.png');        // 물고기
-    this.load.image('bomb', 'assets/bomb.png');        // 얼음 가시
-    this.load.image('dude', 'assets/dude.png');        // 펭귄
+    this.load.image('sky', 'assets/sky.png');        // 배경
+    this.load.image('platform', 'assets/platform.png'); // 바닥
+    this.load.image('bomb', 'assets/bomb.png');      // 얼음 가시
+    this.load.image('star', 'assets/star.png');      // 물고기
+    this.load.image('dude', 'assets/dude.png');      // 펭귄
 }
 
 
-// ==============================
-// 3. 오브젝트 생성
-// ==============================
+// =====================================
+// 3. 씬 생성
+// =====================================
 function create () {
-    // 1) 배경
-    this.add.image(400, 300, 'sky')
-        .setDisplaySize(800, 600);
+    // 1) 스크롤되는 배경
+    bg = this.add.tileSprite(400, 300, 800, 600, 'sky');
 
-    // 2) 플랫폼 (바닥 + 발판)
-    platforms = this.physics.add.staticGroup();
+    // 2) 바닥(플랫폼 하나만 크게)
+    ground = this.physics.add.staticImage(400, 560, 'platform');
+    ground.setScale(GROUND_SCALE_X, GROUND_SCALE_Y);
+    ground.refreshBody();
 
-    // 바닥: 화면 전체를 덮도록 크게
-    platforms.create(400, 590, 'platform')
-        .setScale(1.6)          // 바닥은 더 크게
-        .refreshBody();
-
-    // 점프해서 올라갈 수 있는 발판들
-    platforms.create(220, 450, 'platform')
-        .setScale(PLATFORM_SCALE)
-        .refreshBody();
-
-    platforms.create(500, 360, 'platform')
-        .setScale(PLATFORM_SCALE)
-        .refreshBody();
-
-    platforms.create(740, 280, 'platform')
-        .setScale(PLATFORM_SCALE)
-        .refreshBody();
-
-    platforms.create(380, 210, 'platform')
-        .setScale(PLATFORM_SCALE)
-        .refreshBody();
-
-    // 3) 플레이어(펭귄)
-    player = this.physics.add.sprite(100, 520, 'dude');
+    // 3) 플레이어(펭귄) - 항상 왼쪽에 고정, 점프만
+    player = this.physics.add.sprite(150, 480, 'dude');
     player.setScale(PLAYER_SCALE);
-    player.setBounce(0.2);
-    player.setCollideWorldBounds(true);   // 화면 밖으로 못 나가게
+    player.setCollideWorldBounds(true);
+    player.setBounce(0); // 튕김 없음
 
-    // 4) 키 입력
-    cursors = this.input.keyboard.createCursorKeys();
+    // 충돌 범위가 너무 크면 여기서 body 크기 조정 가능
+    // player.body.setSize(width, height).setOffset(offsetX, offsetY);
+
+    // 4) 입력 키
+    cursors   = this.input.keyboard.createCursorKeys();
+    spaceKey  = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     restartKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
-    // 5) 물고기 (발판 위에 배치)
-    stars = this.physics.add.group();
+    // 5) 그룹 생성
+    fishes = this.physics.add.group();
+    bombs  = this.physics.add.group();
 
-    const starPositions = [
-        { x: 220, y: 410 },  // 첫 번째 발판 위
-        { x: 500, y: 320 },  // 두 번째 발판 위
-        { x: 740, y: 240 },  // 세 번째 발판 위
-        { x: 380, y: 170 },  // 제일 위 발판 위
-        { x: 120, y: 350 }   // 중간 공중
-    ];
-
-    starPositions.forEach(pos => {
-        let star = stars.create(pos.x, pos.y, 'star');
-        star.setScale(STAR_SCALE);
-        star.setBounceY(Phaser.Math.FloatBetween(0.2, 0.4));
-    });
-
-    // 6) 얼음 가시(적)
-    bombs = this.physics.add.group();
-
-    // 7) 점수 & 설명 텍스트
+    // 6) 점수 & 안내 텍스트
     scoreText = this.add.text(16, 16, '점수: 0', {
         fontSize: '28px',
         fill: '#ffffff'
     });
 
-    instructionsText = this.add.text(
+    infoText = this.add.text(
         16,
         52,
-        '← → 이동, ↑ 점프  |  모든 물고기를 먹으면 클리어!  |  얼음 가시는 피하세요.  R = 다시 시작',
+        'SPACE 또는 ↑ 점프  |  물고기 = 점수, 얼음 가시 = Game Over,  R = 재시작',
         { fontSize: '16px', fill: '#ffffff' }
     );
 
-    // 8) 충돌 설정
-    this.physics.add.collider(player, platforms);
-    this.physics.add.collider(stars, platforms);
-    this.physics.add.collider(bombs, platforms);
+    // 7) 물리 충돌/겹침 설정
+    this.physics.add.collider(player, ground);
+    this.physics.add.collider(bombs, ground);
 
-    this.physics.add.overlap(player, stars, collectStar, null, this);
-    this.physics.add.collider(player, bombs, hitBomb, null, this);
+    this.physics.add.overlap(player, fishes, collectFish, null, this);
+    this.physics.add.overlap(player, bombs, hitBomb, null, this);
+
+    // 8) 주기적으로 장애물 & 물고기 생성
+    this.time.addEvent({
+        delay: 1300,           // 1.3초마다 장애물 생성
+        callback: spawnBomb,
+        callbackScope: this,
+        loop: true
+    });
+
+    this.time.addEvent({
+        delay: 900,            // 0.9초마다 물고기 생성
+        callback: spawnFish,
+        callbackScope: this,
+        loop: true
+    });
 }
 
 
-// ==============================
-// 4. 매 프레임 업데이트
-// ==============================
+// =====================================
+// 4. 매 프레임 호출
+// =====================================
 function update () {
-    // 게임이 끝났거나(사망/클리어) 멈춘 상태
-    if (gameOver || gameWon) {
+    if (gameOver) {
         // R 키로 재시작
         if (Phaser.Input.Keyboard.JustDown(restartKey)) {
             this.scene.restart();
-            gameOver = false;
-            gameWon = false;
             score = 0;
+            gameOver = false;
         }
         return;
     }
 
-    // 좌우 이동
-    if (cursors.left.isDown) {
-        player.setVelocityX(-260);
-        player.setFlipX(true);
-    } else if (cursors.right.isDown) {
-        player.setVelocityX(260);
-        player.setFlipX(false);
-    } else {
-        player.setVelocityX(0);
+    // 배경 스크롤 (왼쪽으로 흐르는 느낌)
+    bg.tilePositionX += SCROLL_SPEED * this.game.loop.delta / 1000;
+
+    // 플레이어는 x 위치 고정, 점프만 제어
+    player.setVelocityX(0);
+
+    const jumpPressed = cursors.up.isDown || spaceKey.isDown;
+
+    if (jumpPressed && player.body.touching.down) {
+        player.setVelocityY(JUMP_VELOCITY);
     }
 
-    // 점프 (바닥이나 발판에 닿아 있을 때만)
-    if (cursors.up.isDown && player.body.touching.down) {
-        player.setVelocityY(-380);
+    // 화면 밖 아래로 떨어지면 Game Over
+    if (player.y > 620) {
+        hitBomb.call(this, player, null);
     }
+
+    // 화면 왼쪽으로 나간 물체는 삭제 (성능 & 깔끔)
+    fishes.children.iterate(obj => {
+        if (obj && obj.x < -50) obj.destroy();
+    });
+    bombs.children.iterate(obj => {
+        if (obj && obj.x < -50) obj.destroy();
+    });
 }
 
 
-// ==============================
-// 5. 물고기 먹었을 때
-// ==============================
-function collectStar (player, star) {
-    star.disableBody(true, true);   // 물고기 숨기기
+// =====================================
+// 5. 물고기 생성 & 먹었을 때
+// =====================================
+function spawnFish () {
+    if (gameOver) return;
+
+    // 물고기 출현 높이 (살짝 랜덤)
+    const minY = 280;
+    const maxY = 520;
+    const y = Phaser.Math.Between(minY, maxY);
+
+    // 오른쪽 밖에서 튀어나오게
+    const fish = fishes.create(850, y, 'star');
+    fish.setScale(FISH_SCALE);
+    fish.setVelocityX(-SCROLL_SPEED);
+    fish.body.allowGravity = false;
+}
+
+function collectFish (player, fish) {
+    fish.destroy();
     score += 10;
     scoreText.setText('점수: ' + score);
-
-    // 남은 물고기 없으면 → 클리어
-    if (stars.countActive(true) === 0) {
-        gameWon = true;
-        this.physics.pause();
-
-        instructionsText.setText('🎉 클리어! R 키를 눌러 다시 시작');
-    } else {
-        // 아직 남아 있으면 얼음 가시 하나 생성 (난이도 상승)
-        const x = (player.x < 400)
-            ? Phaser.Math.Between(420, 780)  // 플레이어 반대편에서 생성
-            : Phaser.Math.Between(20, 380);
-
-        const bomb = bombs.create(x, 0, 'bomb');
-        bomb.setScale(BOMB_SCALE);
-        bomb.setBounce(1);
-        bomb.setCollideWorldBounds(true);
-        bomb.setVelocity(Phaser.Math.Between(-200, 200), 200);
-        bomb.allowGravity = false; // 튕기기만 하도록
-    }
 }
 
 
-// ==============================
-// 6. 얼음 가시에 맞았을 때
-// ==============================
+// =====================================
+// 6. 얼음 가시 생성 & 맞았을 때
+// =====================================
+function spawnBomb () {
+    if (gameOver) return;
+
+    const y = 520; // 거의 바닥 높이
+
+    const bomb = bombs.create(850, y, 'bomb');
+    bomb.setScale(BOMB_SCALE);
+    bomb.setVelocityX(-SCROLL_SPEED);
+    bomb.body.allowGravity = false;
+}
+
 function hitBomb (player, bomb) {
+    if (gameOver) return;
+
     this.physics.pause();
     player.setTint(0xff0000);
     gameOver = true;
 
-    instructionsText.setText('💥 Game Over!  R 키를 눌러 다시 시작');
+    infoText.setText('💥 Game Over!   R 키를 눌러 다시 시작');
 }
