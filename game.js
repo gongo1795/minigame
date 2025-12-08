@@ -49,20 +49,23 @@ function create() {
     // --- 배경 (스크롤용 타일) ---
     bg = this.add.tileSprite(400, 300, 800, 600, "sky");
 
-    // --- 바닥 ---
-    ground = this.physics.add.staticImage(400, 520, "ground");
-    ground.setScale(0.5);      // 필요하면 0.4~0.6 사이로 조절
+    // 바닥 (화면 전체 가득 반복)
+    ground = this.add.tileSprite(400, 520, 800, 120, "ground");
+    this.physics.add.existing(ground, true);
+    ground.setScale(0.6); 
     ground.refreshBody();
-    ground.setDepth(5);        // 플레이어 뒤/앞 배치 조정용
+    ground.setDepth(5);
+
 
     // --- 펭귄 ---
-    player = this.physics.add.sprite(140, 460, "penguin");
-    player.setScale(0.23);
+    player = this.physics.add.sprite(140, 450, "penguin");
+    player.setScale(0.22);
     player.setCollideWorldBounds(true);
-    // 충돌 박스 살짝 줄이기
+    
+    // 히트박스 정밀 조정
     player.body
-        .setSize(player.width * 0.5, player.height * 0.8)
-        .setOffset(player.width * 0.25, player.height * 0.2);
+    .setSize(player.width * 0.45, player.height * 0.75)
+    .setOffset(player.width * 0.3, player.height * 0.25);
 
     // --- 입력 ---
     cursors    = this.input.keyboard.createCursorKeys();
@@ -126,6 +129,8 @@ function create() {
 // UPDATE
 // ==================================
 function update(time, delta) {
+    ground.tilePositionX += gameSpeed * dt * 0.7;
+
     if (gameOver) {
         if (Phaser.Input.Keyboard.JustDown(restartKey)) {
             // 재시작
@@ -164,24 +169,31 @@ function update(time, delta) {
 // ==================================
 // OBJECT SPAWN
 // ==================================
+// 물고기는 바닥 위 살짝 위쪽
 function spawnFish() {
     if (gameOver) return;
+    const y = Phaser.Math.Between(350, 430);
 
-    const y = Phaser.Math.Between(330, 450);  // 비교적 낮게
     const fish = fishGroup.create(860, y, "fish");
-    fish.setScale(0.12);                      // 크기 줄임
+    fish.setScale(0.1);
     fish.setVelocityX(-gameSpeed);
     fish.body.allowGravity = false;
 }
 
+
+// 얼음 가시는 바닥에 정확히 붙이기
 function spawnSpike() {
     if (gameOver) return;
 
     const spike = spikeGroup.create(860, 500, "spike");
-    spike.setScale(0.22);                     // 크기 줄임
+    spike.setScale(0.18);
     spike.setVelocityX(-gameSpeed);
     spike.body.allowGravity = false;
+
+    // 바닥 정확히 맞추기
+    spike.setOrigin(0.5, 1);
 }
+
 
 
 // ==================================
