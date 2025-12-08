@@ -129,7 +129,7 @@ function create() {
 // UPDATE
 // ==================================
 function update(time, delta) {
-    ground.tilePositionX += gameSpeed * dt * 0.7;
+    const dt = delta / 1000;   // ✅ 1) 먼저 선언
 
     if (gameOver) {
         if (Phaser.Input.Keyboard.JustDown(restartKey)) {
@@ -142,10 +142,11 @@ function update(time, delta) {
         return;
     }
 
-    const dt = delta / 1000;
-
+    // ✅ 2) 게임 진행 중일 때만 스크롤
     // 배경 스크롤
     bg.tilePositionX += gameSpeed * dt;
+    // 바닥 스크롤
+    ground.tilePositionX += gameSpeed * dt * 0.7;
 
     // 펭귄은 제자리
     player.setVelocityX(0);
@@ -164,6 +165,7 @@ function update(time, delta) {
     cleanupGroup(fishGroup);
     cleanupGroup(spikeGroup);
 }
+
 
 
 // ==================================
