@@ -45,49 +45,56 @@ function preload() {
 // CREATE SCENE
 // ==================================
 function create() {
-    // 배경
+
+    // --- 배경 ---
     bg = this.add.tileSprite(400, 300, 800, 600, "sky");
 
-    // 바닥 이미지 (스케일 ↓)
-    ground = this.physics.add.staticImage(400, 540, "ground")
-        .setScale(0.8)
-        .refreshBody();
+    // --- 바닥 (수정 완료) ---
+    ground = this.physics.add.staticImage(400, 510, "ground");
+    ground.setScale(0.45);
+    ground.refreshBody();
+    ground.setDepth(10);
 
-    // 펭귄
+
+    // --- 펭귄 ---
     player = this.physics.add.sprite(140, 470, "penguin");
     player.setScale(0.23);
     player.setCollideWorldBounds(true);
     player.body.setSize(player.width * 0.5, player.height * 0.8).setOffset(30, 20);
 
-    // 입력키
+
     cursors = this.input.keyboard.createCursorKeys();
     restartKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
-    // 그룹 생성
+
     fishGroup  = this.physics.add.group();
     spikeGroup = this.physics.add.group();
 
-    // UI
+
     scoreText = this.add.text(16, 16, "점수: 0", { fontSize: "28px", fill: "#ffffff" });
     highScoreText = this.add.text(16, 48, `최고 기록: ${highScore}`, { fontSize: "22px", fill: "#ffffaa" });
-    infoText = this.add.text(16, 80, "↑ 또는 SPACE = 점프 | R = 재시작", { fontSize: "18px", fill: "#ffffff" });
+    infoText = this.add.text(16, 80, "↑ SPACE = 점프 | R = 재시작", { fontSize: "18px", fill: "#ffffff" });
 
-    // 충돌
+
     this.physics.add.collider(player, ground);
+    this.physics.add.collider(spikeGroup, ground);
+
+
     this.physics.add.overlap(player, fishGroup, collectFish, null, this);
     this.physics.add.overlap(player, spikeGroup, hitSpike, null, this);
 
-    // 주기적 생성 (수정됨 → 과하지 않게)
-    this.time.addEvent({ delay: 2400, callback: spawnFish,  callbackScope: this, loop: true });
+
+    this.time.addEvent({ delay: 2400, callback: spawnFish, callbackScope: this, loop: true });
     this.time.addEvent({ delay: 3000, callback: spawnSpike, callbackScope: this, loop: true });
 
-    // 난이도 증가
+
     this.time.addEvent({
         delay: 9000,
         callback: () => (gameSpeed += 50),
         loop: true
     });
 }
+
 
 
 // ==================================
