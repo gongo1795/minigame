@@ -14,6 +14,7 @@ let gameWon = false;
 let restartKey;
 let instructionsText;
 
+// 스케일(이미지 크기 조절용)
 const PLATFORM_SCALE = 0.4;
 const PLAYER_SCALE   = 0.25;
 const STAR_SCALE     = 0.18;
@@ -43,16 +44,18 @@ const config = {
 
 const game = new Phaser.Game(config);
 
+
 // ==============================
 // 2. 이미지 로드
 // ==============================
 function preload () {
-    this.load.image('sky', 'assets/sky.png');          // 배경
+    this.load.image('sky', 'assets/sky.png');       // 배경
     this.load.image('platform', 'assets/platform.png'); // 발판
-    this.load.image('star', 'assets/star.png');        // 물고기
-    this.load.image('bomb', 'assets/bomb.png');        // 얼음 가시
-    this.load.image('dude', 'assets/dude.png');        // 펭귄 (한 장짜리)
+    this.load.image('star', 'assets/star.png');     // 물고기
+    this.load.image('bomb', 'assets/bomb.png');     // 얼음 가시
+    this.load.image('dude', 'assets/dude.png');     // 펭귄 (한 장짜리)
 }
+
 
 // ==============================
 // 3. 오브젝트 생성
@@ -62,26 +65,32 @@ function create () {
     this.add.image(400, 300, 'sky')
         .setDisplaySize(800, 600);
 
-    // 2) 플랫폼
+    // 2) 플랫폼 (점프 루트 생기게 배치)
     platforms = this.physics.add.staticGroup();
 
+    // 바닥
     platforms.create(400, 580, 'platform')
         .setScale(PLATFORM_SCALE)
         .refreshBody();
 
-    platforms.create(650, 420, 'platform')
+    // 위쪽 발판들 (좌 → 우로 점프 가능하게)
+    platforms.create(200, 450, 'platform')
         .setScale(PLATFORM_SCALE)
         .refreshBody();
 
-    platforms.create(150, 320, 'platform')
+    platforms.create(450, 350, 'platform')
         .setScale(PLATFORM_SCALE)
         .refreshBody();
 
-    platforms.create(750, 260, 'platform')
+    platforms.create(700, 280, 'platform')
         .setScale(PLATFORM_SCALE)
         .refreshBody();
 
-    // 3) 플레이어
+    platforms.create(400, 200, 'platform')
+        .setScale(PLATFORM_SCALE)
+        .refreshBody();
+
+    // 3) 플레이어(펭귄)
     player = this.physics.add.sprite(100, 450, 'dude');
     player.setScale(PLAYER_SCALE);
     player.setBounce(0.2);
@@ -91,16 +100,21 @@ function create () {
     cursors = this.input.keyboard.createCursorKeys();
     restartKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
-    // 5) 물고기 (5개만)
-    stars = this.physics.add.group({
-        key: 'star',
-        repeat: 4,                           // 총 5개
-        setXY: { x: 150, y: 80, stepX: 140 } // 간격 넓게
-    });
+    // 5) 물고기 (맵에 맞춰 위치 지정)
+    stars = this.physics.add.group();
 
-    stars.children.iterate(function (child) {
-        child.setBounceY(Phaser.Math.FloatBetween(0.3, 0.5));
-        child.setScale(STAR_SCALE);
+    const starPositions = [
+        { x: 200, y: 400 },
+        { x: 450, y: 300 },
+        { x: 700, y: 230 },
+        { x: 400, y: 150 },
+        { x: 100, y: 280 }
+    ];
+
+    starPositions.forEach(pos => {
+        let star = stars.create(pos.x, pos.y, 'star');
+        star.setScale(STAR_SCALE);
+        star.setBounceY(Phaser.Math.FloatBetween(0.3, 0.5));
     });
 
     // 6) 얼음 가시
@@ -112,7 +126,9 @@ function create () {
         fill: '#ffffff'
     });
 
-    instructionsText = this.add.text(16, 52,
+    instructionsText = this.add.text(
+        16,
+        52,
         '← → 이동, ↑ 점프, 모든 물고기를 먹으면 클리어, R = 다시 시작',
         { fontSize: '18px', fill: '#ffffff' }
     );
@@ -126,10 +142,12 @@ function create () {
     this.physics.add.collider(player, bombs, hitBomb, null, this);
 }
 
+
 // ==============================
 // 4. 매 프레임 업데이트
 // ==============================
 function update () {
+    // 게임이 끝났거나(사망/클리어) 멈춘 상태
     if (gameOver || gameWon) {
         // R 키로 재시작
         if (Phaser.Input.Keyboard.JustDown(restartKey)) {
@@ -141,19 +159,20 @@ function update () {
         return;
     }
 
-    // 움직임 범위 안에서만 움직이도록 (기본 설정)
+    // 좌우 이동
     if (cursors.left.isDown) {
-        player.setVelocityX(-220);   // 좀 더 빠르게
+        player.setVelocityX(-260);   // 살짝 빠르게
         player.setFlipX(true);
     } else if (cursors.right.isDown) {
-        player.setVelocityX(220);
+        player.setVelocityX(260);
         player.setFlipX(false);
     } else {
         player.setVelocityX(0);
     }
 
+    // 점프 (바닥에 닿아 있을 때만)
     if (cursors.up.isDown && player.body.touching.down) {
-        player.setVelocityY(-330);
+        player.setVelocityY(-380);   // 점프 조금 더 높게
     }
 }
 
@@ -189,6 +208,7 @@ function collectStar (player, star) {
     }
 }
 
+
 // ==============================
 // 6. 얼음 가시에 맞았을 때
 // ==============================
@@ -199,4 +219,3 @@ function hitBomb (player, bomb) {
 
     instructionsText.setText('Game Over! R 키를 눌러 다시 시작');
 }
-
