@@ -10,6 +10,12 @@ let score = 0;
 let scoreText;
 let gameOver = false;
 
+const PLATFORM_SCALE = 0.4; // 발판 크기
+const PLAYER_SCALE   = 0.25; // 펭귄 크기
+const STAR_SCALE     = 0.18; // 물고기 크기
+const BOMB_SCALE     = 0.25; // 얼음 가시 크기
+
+
 // ==============================
 // 1. Phaser 게임 설정
 // ==============================
