@@ -82,9 +82,10 @@ function create() {
 
 
     // 히트박스 수정
-    player.body
-        .setSize(player.width * 0.45, player.height * 0.75)
-        .setOffset(player.width * 0.3, player.height * 0.25);
+   // 히트박스 수정 → 펭귄이 바닥에서 떠 보이게 조정
+    player.body.setSize(player.width * 0.45, player.height * 0.55);
+    player.body.setOffset(player.width * 0.3, player.height * 0.42);
+
 
     // 입력
     cursors = this.input.keyboard.createCursorKeys();
