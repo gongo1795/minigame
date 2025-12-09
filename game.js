@@ -10,12 +10,14 @@ let highScore = Number(localStorage.getItem("penguinHighScore") || 0);
 let scoreText, highScoreText, infoText;
 let gameOver = false;
 
-let gameSpeed = 220;
-let groundTopY = 0;
+let gameSpeed = 220;   // 기본 이동 속도
+let groundTopY = 0;    // 바닥 윗면 y
 
-let fishY = 0;       // 물고기 고정 y
-let spikeY = 0;      // 얼음결정 고정 y
+let fishY = 0;         // 물고기 고정 y
+let spikeY = 0;        // 얼음 결정 고정 y
 
+const FISH_OFFSET = -45; // 펭귄 기준 물고기 위치
+const SPIKE_OFFSET = 28; // 펭귄 기준 얼음 결정 위치
 
 
 // ==================================
@@ -36,7 +38,7 @@ new Phaser.Game(config);
 
 
 // ==================================
-//  PRELOAD ASSETS
+// PRELOAD
 // ==================================
 function preload() {
     this.load.image("sky",    "assets/sky.png");
@@ -48,14 +50,14 @@ function preload() {
 
 
 // ==================================
-// CREATE SCENE
+// CREATE
 // ==================================
 function create() {
 
     // --- 배경 (스크롤용) ---
     bg = this.add.tileSprite(400, 300, 800, 600, "sky");
 
-        // ============================
+    // ============================
     // 1) 충돌용 바닥 (보이지 않는 판)
     // ============================
     groundCollider = this.physics.add.staticImage(400, 460, "ground");
@@ -63,28 +65,26 @@ function create() {
     groundCollider.refreshBody();
     groundCollider.setVisible(false);
     groundTopY = groundCollider.y - groundCollider.displayHeight / 2;
-    
-    
-    // ===========
-    //— 2) 보이는 바닥 (펭귄 기준으로 위치 자동 맞춤)
-    //=============
+
+    // ============================
+    // 2) 보이는 바닥 (아래쪽은 잘려도 됨)
+    // ============================
     ground = this.add.image(400, 0, "ground");
     ground.setScale(1.4);
     ground.setDepth(1);
-    
-    // 펭귄 생성
+
+    // --- 펭귄 ---
     player = this.physics.add.sprite(140, groundTopY - 8, "penguin");
     player.setScale(0.22);
     player.setDepth(2);
     player.setCollideWorldBounds(true);
-    
-    // 📌 펭귄이 생성된 다음 위치 다시 계산해 바닥 맞추기
+
+    // 바닥 위치를 펭귄 기준으로 아래로 내리기
     ground.y = player.y + 200;
 
-    fishY  = player.y - 40;                         // 물고기: 펭귄 머리 조금 위
-    spikeY = player.y + player.displayHeight / 2 - 8; // 가시: 펭귄 발 바로 옆
-
-
+    // 물고기 / 얼음 결정 고정 y 계산 (한 번만)
+    fishY  = player.y + FISH_OFFSET;
+    spikeY = player.y + SPIKE_OFFSET;
 
     // 히트박스 정밀 조정
     player.body
@@ -123,7 +123,7 @@ function create() {
     this.physics.add.overlap(player, fishGroup, collectFish, null, this);
     this.physics.add.overlap(player, spikeGroup, hitSpike,   null, this);
 
-    // --- 주기적 생성 ---
+    // --- 오브젝트 생성 타이머 ---
     this.time.addEvent({
         delay: 2400,
         callback: spawnFish,
@@ -175,7 +175,7 @@ function update(time, delta) {
         player.setVelocityY(-460);
     }
 
-    // 시간에 따라 점수 증가
+    // 점수 증가
     score += 10 * dt;
     scoreText.setText("점수: " + Math.floor(score));
 
@@ -185,36 +185,32 @@ function update(time, delta) {
 }
 
 
-
 // ==================================
 // OBJECT SPAWN
 // ==================================
 
+// 물고기 (항상 같은 높이)
 function spawnFish() {
     if (gameOver) return;
 
-    const fish = fishGroup.create(860, fishY, "fish"); // ← 고정 y
+    const fish = fishGroup.create(860, fishY, "fish");
     fish.setScale(0.10);
     fish.setVelocityX(-gameSpeed);
     fish.body.allowGravity = false;
     fish.setDepth(2);
 }
 
-
-
+// 얼음 결정 (항상 같은 높이, 바닥 근처)
 function spawnSpike() {
     if (gameOver) return;
 
-    const spike = spikeGroup.create(860, spikeY, "spike"); // ← 고정 y
-    spike.setScale(0.10);
+    const spike = spikeGroup.create(860, spikeY, "spike");
+    spike.setScale(0.10);             // 크기 줄임
     spike.setVelocityX(-gameSpeed);
     spike.body.allowGravity = false;
-    spike.setOrigin(0.5, 1);
+    spike.setOrigin(0.5, 1);          // 아래쪽이 spikeY에 닿도록
     spike.setDepth(2);
 }
-
-
-
 
 
 // ==================================
