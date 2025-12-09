@@ -51,22 +51,26 @@ function create() {
     // --- 배경 (스크롤용) ---
     bg = this.add.tileSprite(400, 300, 800, 600, "sky");
 
-    // --- 바닥 (고정, 충돌용) ---
-    // 화면 아래쪽에 딱 붙게 y=560 정도로 배치
-    ground = this.physics.add.staticImage(400, 560, "ground");
-    ground.setScale(0.8);
+    // --- 바닥 (고정, 충돌용 & 화면 아래 꽉 채우기) ---
+    // 1) 일단 y=0에 만들고
+    ground = this.physics.add.staticImage(400, 0, "ground");
+    // 2) 스케일을 키워서 화면 아래가 전부 눈바닥이 되도록
+    ground.setScale(1.4);              // ← 바닥 크기 키우기 (필요하면 1.3~1.6 사이로 조절)
     ground.refreshBody();
-    ground.setDepth(1);  // 펭귄보다 뒤에
+    // 3) 지금 스케일 기준으로, '바닥의 아래쪽'이 화면 하단(y=600)에 딱 닿도록 재배치
+    ground.y = 600 - ground.displayHeight / 2;
+    ground.refreshBody();
+    ground.setDepth(1);                // 펭귄보다 뒤에 오게
 
-    // 바닥 윗면 위치 계산해서 저장
+    // 바닥 윗면 y (가시/물고기, 펭귄 위치 잡을 때 사용)
     groundTopY = ground.y - ground.displayHeight / 2;
 
     // --- 펭귄 ---
-    // 바닥 윗면보다 위쪽에 살짝 배치
-    player = this.physics.add.sprite(140, groundTopY - 70, "penguin");
+    // 펭귄의 발이 바닥에 거의 닿게 y 위치를 groundTopY 기준으로 맞추기
+    player = this.physics.add.sprite(140, groundTopY - 10, "penguin");
     player.setScale(0.22);
     player.setCollideWorldBounds(true);
-    player.setDepth(2);  // ground보다 앞에 보이게
+    player.setDepth(2);                // 바닥 위에 보이게 (중요!)
 
     // 히트박스 정밀 조정
     player.body
@@ -100,21 +104,21 @@ function create() {
     );
 
     // --- 물리 충돌 & 겹침 ---
-    this.physics.add.collider(player, ground); // 펭귄-바닥 충돌
+    this.physics.add.collider(player, ground);
 
     this.physics.add.overlap(player, fishGroup, collectFish, null, this);
     this.physics.add.overlap(player, spikeGroup, hitSpike,   null, this);
 
     // --- 주기적 생성 ---
     this.time.addEvent({
-        delay: 2400,           // 물고기 생성 간격
+        delay: 2400,
         callback: spawnFish,
         callbackScope: this,
         loop: true
     });
 
     this.time.addEvent({
-        delay: 3000,           // 얼음가시 생성 간격
+        delay: 3000,
         callback: spawnSpike,
         callbackScope: this,
         loop: true
@@ -127,6 +131,7 @@ function create() {
         loop: true
     });
 }
+
 
 
 // ==================================
