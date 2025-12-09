@@ -11,10 +11,10 @@ let scoreText, highScoreText, infoText;
 let gameOver = false;
 
 let gameSpeed = 220;   // 기본 이동 속도
-let groundTopY = 0;    // 바닥 윗면 y
+let groundTopY = 0;    // "보이는 바닥"의 윗면 y
 
-let fishY = 0;
-let spikeY = 0;
+let fishY = 0;         // 물고기 고정 y
+let spikeY = 0;        // 얼음결정 고정 y
 
 
 // ==================================
@@ -55,37 +55,36 @@ function create() {
     bg = this.add.tileSprite(400, 300, 800, 600, "sky");
 
     // ============================
-    // 1) 충돌용 바닥 (보이지 않는 판)
+    // 1) 보이는 바닥 (맨 아래 큰 눈)
+//      → 이 이미지를 기준으로 "진짜 바닥" 잡기
     // ============================
-    groundCollider = this.physics.add.staticImage(400, 460, "ground");
-    groundCollider.setScale(0.4);
-    groundCollider.refreshBody();
-    groundCollider.setVisible(false);
-    groundTopY = groundCollider.y - groundCollider.displayHeight / 2;
-
-    // ============================
-    // 2) 보이는 바닥 (아래쪽은 잘려도 됨)
-    // ============================
-    ground = this.add.image(400, 0, "ground");
-    ground.setScale(1.4);
+    ground = this.add.image(400, 600, "ground");  // 화면 맨 아래에 붙이기
+    ground.setOrigin(0.5, 1);                    // 아래쪽이 기준
+    ground.setScale(1.4);                        // 아래 꽉 채우기
     ground.setDepth(1);
 
-    // --- 펭귄 ---
-    player = this.physics.add.sprite(140, groundTopY - 8, "penguin");
+    // 스케일 적용 후, "눈 윗면" y 좌표 계산
+    groundTopY = ground.y - ground.displayHeight;
+
+    // ============================
+    // 2) 충돌용 바닥 (보이지 않는 판)
+    // ============================
+    groundCollider = this.physics.add.staticImage(400, groundTopY, "ground");
+    groundCollider.setScale(1.4);
+    groundCollider.refreshBody();
+    groundCollider.setVisible(false);            // 충돌만 하고 안 보이게
+
+    // --- 펭귄 (눈 윗면 바로 위에 서게) ---
+    player = this.physics.add.sprite(140, groundTopY - 30, "penguin");
     player.setScale(0.22);
     player.setDepth(2);
     player.setCollideWorldBounds(true);
-    
-    // 바닥 위치를 펭귄 기준으로 아래로 내리기
-    ground.y = player.y + 200;
-    
-    // ✅ 여기! 바닥선 기준으로 고정 y 계산
-    fishY  = groundTopY - 20;  // 💡 수정: 바닥보다 20px 위 (물고기를 낮춤)
-    spikeY = groundTopY + 10;  // 💡 수정: 바닥선보다 10px 아래로 (얼음 결정을 땅에 묻힘)
 
-    
+    // 물고기 / 얼음결정 고정 y (눈 윗면 기준)
+    fishY  = groundTopY - 60;   // 눈 윗면에서 60px 위
+    spikeY = groundTopY;        // 눈 윗면에 딱 붙게
 
-    // 히트박스 정밀 조정
+    // 히트박스 정밀 조정 (원하면 조절)
     player.body
         .setSize(player.width * 0.45, player.height * 0.75)
         .setOffset(player.width * 0.3, player.height * 0.25);
@@ -199,12 +198,12 @@ function spawnFish() {
     fish.setDepth(2);
 }
 
-// 얼음 결정 (항상 같은 높이, 바닥 근처)
+// 얼음 결정 (항상 같은 높이, 눈 윗면에 붙이기)
 function spawnSpike() {
     if (gameOver) return;
 
     const spike = spikeGroup.create(860, spikeY, "spike");
-    spike.setScale(0.10);             // 크기 줄임
+    spike.setScale(0.10);
     spike.setVelocityX(-gameSpeed);
     spike.body.allowGravity = false;
     spike.setOrigin(0.5, 1);          // 아래쪽이 spikeY에 닿도록
