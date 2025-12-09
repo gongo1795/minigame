@@ -83,7 +83,7 @@ function create() {
     // 물고기 / 얼음결정 고정 y (눈 윗면 기준)
     // ✅ 펭귄 위치를 기준으로 고정
     fishY  = player.y + 80;                       // 펭귄 머리 조금 위
-    spikeY = player.y + player.displayHeight / 2 + 150; // 펭귄 발 바로 옆
+    spikeY = player.y + player.displayHeight / 2 + 140; // 펭귄 발 바로 옆
 
 
     // 히트박스 조정
