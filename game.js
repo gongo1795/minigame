@@ -71,7 +71,7 @@ function create() {
     groundCollider.setVisible(false);
 
     // 🐧 펭귄
-    player = this.physics.add.sprite(140, groundTopY - 45, "penguin");
+    player = this.physics.add.sprite(140, groundTopY - 60, "penguin");
     player.setScale(0.15);
     player.setDepth(2);
     player.setCollideWorldBounds(true);
