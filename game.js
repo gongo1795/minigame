@@ -65,7 +65,7 @@ function create() {
     const groundTopY = ground.y - ground.displayHeight + 40; // 눈 윗선
 
     // 충돌용 바닥(보이지 않음)
-    groundCollider = this.physics.add.staticImage(400, groundTopY, "ground");
+    groundCollider = this.physics.add.staticImage(400, groundTopY + 12 , "ground");
     groundCollider.setScale(1.4);
     groundCollider.refreshBody();
     groundCollider.setVisible(false);
