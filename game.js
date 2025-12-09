@@ -186,33 +186,29 @@ function update(time, delta) {
 function spawnFish() {
     if (gameOver) return;
 
-    // 펭귄 y 기준으로 살짝 위쪽 범위
-    const minY = player.y - 70;   // 펭귄에서 70px 위
-    const maxY = player.y - 30;   // 펭귄에서 30px 위
-    const y = Phaser.Math.Between(minY, maxY);
+    const y = player.y - 55;   // 🔹 항상 펭귄 머리쯤 높이에 생성
 
     const fish = fishGroup.create(860, y, "fish");
-    fish.setScale(0.1);
+    fish.setScale(0.10);
     fish.setVelocityX(-gameSpeed);
     fish.body.allowGravity = false;
     fish.setDepth(2);
 }
 
 
-// 얼음 가시는 펭귄 발 위치에 맞게
 function spawnSpike() {
     if (gameOver) return;
 
-    // 펭귄 발 위치 근처 (살짝 위)
     const spikeY = player.y + player.displayHeight / 2 - 8;
 
     const spike = spikeGroup.create(860, spikeY, "spike");
-    spike.setScale(0.18);
+    spike.setScale(0.10);              // 🔹 0.18 → 0.10 로 많이 축소
     spike.setVelocityX(-gameSpeed);
     spike.body.allowGravity = false;
-    spike.setOrigin(0.5, 1);   // 아래쪽이 spikeY에 붙도록
+    spike.setOrigin(0.5, 1);           // 아래가 spikeY에 닿도록
     spike.setDepth(2);
 }
+
 
 
 
