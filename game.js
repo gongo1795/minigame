@@ -75,7 +75,7 @@ function create() {
     player.setCollideWorldBounds(true);
     
     // 📌 펭귄이 생성된 다음 위치 다시 계산해 바닥 맞추기
-    ground.y = player.y + 140;
+    ground.y = player.y + 170;
 
 
     // 히트박스 정밀 조정
