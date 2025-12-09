@@ -80,8 +80,8 @@ function create() {
     ground.y = player.y + 200;
     
     // ✅ 여기! 바닥선 기준으로 고정 y 계산
-    fishY  = groundTopY - 40;  // 바닥보다 40px 위 (물고기)
-    spikeY = groundTopY;       // 바닥선 위 (얼음결정이 딱 바닥에 붙음)
+    fishY  = groundTopY - 20;  // 💡 수정: 바닥보다 20px 위 (물고기를 낮춤)
+    spikeY = groundTopY + 10;  // 💡 수정: 바닥선보다 10px 아래로 (얼음 결정을 땅에 묻힘)
 
     
 
