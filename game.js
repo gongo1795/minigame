@@ -78,7 +78,7 @@ function create() {
 
     // 고정 생성 위치 계산
     fishY  = player.y + 70;   // 80 → 70 : 물고기 좀 더 위
-    spikeY = player.y + player.displayHeight / 2 + 130; // 140 → 130 : 얼음도 조금 위
+    spikeY = player.y + player.displayHeight / 2 + 140; // 140 → 130 : 얼음도 조금 위
 
 
     // 히트박스 수정
