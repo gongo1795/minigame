@@ -16,8 +16,8 @@ let groundTopY = 0;    // 바닥 윗면 y
 let fishY = 0;         // 물고기 고정 y
 let spikeY = 0;        // 얼음 결정 고정 y
 
-const FISH_OFFSET = -45; // 펭귄 기준 물고기 위치
-const SPIKE_OFFSET = 28; // 펭귄 기준 얼음 결정 위치
+const FISH_OFFSET = -60; // 펭귄 기준 물고기 위치
+const SPIKE_OFFSET = 5; // 펭귄 기준 얼음 결정 위치
 
 
 // ==================================
