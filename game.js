@@ -51,26 +51,32 @@ function create() {
     // --- 배경 (스크롤용) ---
     bg = this.add.tileSprite(400, 300, 800, 600, "sky");
 
-    // --- 바닥 (고정, 충돌용 & 화면 아래 꽉 채우기) ---
-    // 1) 일단 y=0에 만들고
-    ground = this.physics.add.staticImage(400, 0, "ground");
-    // 2) 스케일을 키워서 화면 아래가 전부 눈바닥이 되도록
-    ground.setScale(1.4);              // ← 바닥 크기 키우기 (필요하면 1.3~1.6 사이로 조절)
-    ground.refreshBody();
-    // 3) 지금 스케일 기준으로, '바닥의 아래쪽'이 화면 하단(y=600)에 딱 닿도록 재배치
-    ground.y = 600 - ground.displayHeight / 2;
-    ground.refreshBody();
-    ground.setDepth(1);                // 펭귄보다 뒤에 오게
+    // ============================
+    // 1) 충돌용 바닥(작고, 안 보이는 판)
+    // ============================
+    // 펭귄이 서 있을 실제 바닥
+    groundCollider = this.physics.add.staticImage(400, 520, "ground");
+    groundCollider.setScale(0.4);          // 충돌 판은 얇게
+    groundCollider.refreshBody();
+    groundCollider.setVisible(false);      // 화면에서는 안 보이게
 
-    // 바닥 윗면 y (가시/물고기, 펭귄 위치 잡을 때 사용)
-    groundTopY = ground.y - ground.displayHeight / 2;
+    // 이 위쪽 선이 "바닥 윗면"
+    groundTopY = groundCollider.y - groundCollider.displayHeight / 2;
+
+    // ============================
+    // 2) 보이는 바닥(크게, 아래로 내려서 잘리게)
+    // ============================
+    ground = this.add.image(400, 620, "ground");  // y를 600보다 조금 더 내려서
+    ground.setOrigin(0.5, 1);                     // 아래쪽이 기준이 되게
+    ground.setScale(1.4);                         // 화면 아래 꽉 차도록 키우기
+    ground.setDepth(1);                           // 펭귄보다 뒤에
 
     // --- 펭귄 ---
-    // 펭귄의 발이 바닥에 거의 닿게 y 위치를 groundTopY 기준으로 맞추기
-    player = this.physics.add.sprite(140, groundTopY - 10, "penguin");
+    // 바닥 윗면 기준으로 약간 위에 서 있게
+    player = this.physics.add.sprite(140, groundTopY - 12, "penguin");
     player.setScale(0.22);
     player.setCollideWorldBounds(true);
-    player.setDepth(2);                // 바닥 위에 보이게 (중요!)
+    player.setDepth(2); // 항상 바닥보다 위에 보이게
 
     // 히트박스 정밀 조정
     player.body
@@ -104,7 +110,7 @@ function create() {
     );
 
     // --- 물리 충돌 & 겹침 ---
-    this.physics.add.collider(player, ground);
+    this.physics.add.collider(player, groundCollider);
 
     this.physics.add.overlap(player, fishGroup, collectFish, null, this);
     this.physics.add.overlap(player, spikeGroup, hitSpike,   null, this);
@@ -131,6 +137,7 @@ function create() {
         loop: true
     });
 }
+
 
 
 
@@ -178,12 +185,12 @@ function update(time, delta) {
 // OBJECT SPAWN
 // ==================================
 
-// 물고기는 바닥 위 살짝 위쪽 랜덤
+// 물고기는 바닥 위 조금 위쪽
 function spawnFish() {
     if (gameOver) return;
 
-    const minY = groundTopY - 180;
-    const maxY = groundTopY - 80;
+    const minY = groundTopY - 120;   // 바닥에서 120px 위
+    const maxY = groundTopY - 50;    // 바닥에서 50px 위
     const y = Phaser.Math.Between(minY, maxY);
 
     const fish = fishGroup.create(860, y, "fish");
@@ -201,7 +208,7 @@ function spawnSpike() {
     spike.setScale(0.18);
     spike.setVelocityX(-gameSpeed);
     spike.body.allowGravity = false;
-    spike.setOrigin(0.5, 1);  // 아래쪽이 groundTopY에 닿도록
+    spike.setOrigin(0.5, 1); // 아래가 groundTopY에 닿도록
     spike.setDepth(2);
 }
 
