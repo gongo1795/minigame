@@ -55,15 +55,15 @@ function create() {
     bg = this.add.tileSprite(400, 300, 800, 600, "sky");
 
     // ============================
-    // 1) 보이는 바닥 (맨 아래 큰 눈)
-//      → 이 이미지를 기준으로 "진짜 바닥" 잡기
+    // 1) 보이는 바닥
+    //    → 화면보다 살짝 아래로 내려서 밑이 잘리게
     // ============================
-    ground = this.add.image(400, 600, "ground");  // 화면 맨 아래에 붙이기
+    ground = this.add.image(400, 640, "ground"); // 🔹 600이 아니라 640 정도로 내려놓기
     ground.setOrigin(0.5, 1);                    // 아래쪽이 기준
     ground.setScale(1.4);                        // 아래 꽉 채우기
     ground.setDepth(1);
 
-    // 스케일 적용 후, "눈 윗면" y 좌표 계산
+    // 이 바닥 이미지의 "눈 윗면" y 좌표
     groundTopY = ground.y - ground.displayHeight;
 
     // ============================
@@ -72,7 +72,7 @@ function create() {
     groundCollider = this.physics.add.staticImage(400, groundTopY, "ground");
     groundCollider.setScale(1.4);
     groundCollider.refreshBody();
-    groundCollider.setVisible(false);            // 충돌만 하고 안 보이게
+    groundCollider.setVisible(false);
 
     // --- 펭귄 (눈 윗면 바로 위에 서게) ---
     player = this.physics.add.sprite(140, groundTopY - 30, "penguin");
@@ -84,7 +84,7 @@ function create() {
     fishY  = groundTopY - 60;   // 눈 윗면에서 60px 위
     spikeY = groundTopY;        // 눈 윗면에 딱 붙게
 
-    // 히트박스 정밀 조정 (원하면 조절)
+    // 히트박스 조정
     player.body
         .setSize(player.width * 0.45, player.height * 0.75)
         .setOffset(player.width * 0.3, player.height * 0.25);
@@ -117,7 +117,6 @@ function create() {
 
     // --- 물리 충돌 & 겹침 ---
     this.physics.add.collider(player, groundCollider);
-
     this.physics.add.overlap(player, fishGroup, collectFish, null, this);
     this.physics.add.overlap(player, spikeGroup, hitSpike,   null, this);
 
@@ -143,6 +142,7 @@ function create() {
         loop: true
     });
 }
+
 
 
 // ==================================
