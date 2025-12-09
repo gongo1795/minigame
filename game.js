@@ -55,7 +55,7 @@ function create() {
     // 1) 충돌용 바닥(작고, 안 보이는 판)
     // ============================
     // 펭귄이 서 있을 실제 바닥
-    groundCollider = this.physics.add.staticImage(400, 520, "ground");
+    groundCollider = this.physics.add.staticImage(400, 460, "ground");
     groundCollider.setScale(0.4);          // 충돌 판은 얇게
     groundCollider.refreshBody();
     groundCollider.setVisible(false);      // 화면에서는 안 보이게
@@ -73,7 +73,7 @@ function create() {
 
     // --- 펭귄 ---
     // 바닥 윗면 기준으로 약간 위에 서 있게
-    player = this.physics.add.sprite(140, groundTopY - 12, "penguin");
+    player = this.physics.add.sprite(140, groundTopY - 8, "penguin");
     player.setScale(0.22);
     player.setCollideWorldBounds(true);
     player.setDepth(2); // 항상 바닥보다 위에 보이게
@@ -185,12 +185,12 @@ function update(time, delta) {
 // OBJECT SPAWN
 // ==================================
 
-// 물고기는 바닥 위 조금 위쪽
+// 물고기
 function spawnFish() {
     if (gameOver) return;
 
-    const minY = groundTopY - 120;   // 바닥에서 120px 위
-    const maxY = groundTopY - 50;    // 바닥에서 50px 위
+    const minY = groundTopY - 110;  // 바닥에서 110px 위
+    const maxY = groundTopY - 60;   // 바닥에서 60px 위
     const y = Phaser.Math.Between(minY, maxY);
 
     const fish = fishGroup.create(860, y, "fish");
@@ -200,15 +200,16 @@ function spawnFish() {
     fish.setDepth(2);
 }
 
-// 얼음 가시는 바닥에 딱 붙이기
+// 가시
 function spawnSpike() {
     if (gameOver) return;
 
     const spike = spikeGroup.create(860, groundTopY, "spike");
+    //                                   ^^^^^^^^^  바닥 바로 위
     spike.setScale(0.18);
     spike.setVelocityX(-gameSpeed);
     spike.body.allowGravity = false;
-    spike.setOrigin(0.5, 1); // 아래가 groundTopY에 닿도록
+    spike.setOrigin(0.5, 1);  // 아래가 groundTopY에 붙게
     spike.setDepth(2);
 }
 
