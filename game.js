@@ -16,8 +16,8 @@ let fishY = 0;
 let spikeY = 0;
 
 // 오프셋(미세 조정값)
-const FISH_OFFSET = 5;   // 물고기는 펭귄보다 약간 위
-const SPIKE_OFFSET = 35;  // 얼음결정은 바닥에 딱 닿게
+const FISH_OFFSET = 25;   // 물고기는 펭귄보다 약간 위
+const SPIKE_OFFSET = 55;  // 얼음결정은 바닥에 딱 닿게
 
 // ==================================
 // CONFIG
@@ -71,14 +71,15 @@ function create() {
     groundCollider.setVisible(false);
 
     // 🐧 펭귄
-    player = this.physics.add.sprite(140, groundTopY - 30, "penguin");
+    player = this.physics.add.sprite(140, groundTopY - 45, "penguin");
     player.setScale(0.15);
     player.setDepth(2);
     player.setCollideWorldBounds(true);
 
     // 고정 생성 위치 계산
-    fishY  = player.y - FISH_OFFSET;
-    spikeY = player.y + SPIKE_OFFSET;
+    fishY  = player.y + 70;   // 80 → 70 : 물고기 좀 더 위
+    spikeY = player.y + player.displayHeight / 2 + 130; // 140 → 130 : 얼음도 조금 위
+
 
     // 히트박스 수정
     player.body
