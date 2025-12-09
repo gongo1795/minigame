@@ -16,8 +16,8 @@ let fishY = 0;
 let spikeY = 0;
 
 // 오프셋(미세 조정값)
-const FISH_OFFSET = 25;   // 물고기는 펭귄보다 약간 위
-const SPIKE_OFFSET = 55;  // 얼음결정은 바닥에 딱 닿게
+const FISH_OFFSET = 5;   // 물고기는 펭귄보다 약간 위
+const SPIKE_OFFSET = 35;  // 얼음결정은 바닥에 딱 닿게
 
 // ==================================
 // CONFIG
