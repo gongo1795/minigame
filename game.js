@@ -10,8 +10,12 @@ let highScore = Number(localStorage.getItem("penguinHighScore") || 0);
 let scoreText, highScoreText, infoText;
 let gameOver = false;
 
-let gameSpeed = 220;  // 기본 이동 속도
-let groundTopY = 0;   // 바닥 윗면 y
+let gameSpeed = 220;
+let groundTopY = 0;
+
+let fishY = 0;       // 물고기 고정 y
+let spikeY = 0;      // 얼음결정 고정 y
+
 
 
 // ==================================
@@ -76,6 +80,9 @@ function create() {
     
     // 📌 펭귄이 생성된 다음 위치 다시 계산해 바닥 맞추기
     ground.y = player.y + 200;
+
+    spikeY = groundTopY;        // 얼음결정은 바닥에 딱 붙게
+    fishY  = groundTopY - 55;   // 물고기는 바닥보다 55px 위에 고정
 
 
     // 히트박스 정밀 조정
@@ -182,13 +189,10 @@ function update(time, delta) {
 // OBJECT SPAWN
 // ==================================
 
-// 물고기는 펭귄 바로 위쪽에서만 나오게
 function spawnFish() {
     if (gameOver) return;
 
-    const y = player.y - 55;   // 🔹 항상 펭귄 머리쯤 높이에 생성
-
-    const fish = fishGroup.create(860, y, "fish");
+    const fish = fishGroup.create(860, fishY, "fish"); // ← 고정 y
     fish.setScale(0.10);
     fish.setVelocityX(-gameSpeed);
     fish.body.allowGravity = false;
@@ -196,18 +200,18 @@ function spawnFish() {
 }
 
 
+
 function spawnSpike() {
     if (gameOver) return;
 
-    const spikeY = player.y + player.displayHeight / 2 - 8;
-
-    const spike = spikeGroup.create(860, spikeY, "spike");
-    spike.setScale(0.10);              // 🔹 0.18 → 0.10 로 많이 축소
+    const spike = spikeGroup.create(860, spikeY, "spike"); // ← 고정 y
+    spike.setScale(0.10);
     spike.setVelocityX(-gameSpeed);
     spike.body.allowGravity = false;
-    spike.setOrigin(0.5, 1);           // 아래가 spikeY에 닿도록
+    spike.setOrigin(0.5, 1);  // 아래가 spikeY에 닿도록
     spike.setDepth(2);
 }
+
 
 
 
