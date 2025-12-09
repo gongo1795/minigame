@@ -147,7 +147,12 @@ function update(time, delta) {
 // ==================================
 // SPAWN OBJECTS
 // ==================================
+// ==================================
+// SPAWN OBJECTS
+// ==================================
 function spawnFish() {
+    if (gameOver) return;   // 🔹 추가
+
     const fish = fishGroup.create(860, fishY, "fish");
     fish.setScale(0.10);
     fish.setVelocityX(-gameSpeed);
@@ -156,6 +161,8 @@ function spawnFish() {
 }
 
 function spawnSpike() {
+    if (gameOver) return;   // 🔹 추가
+
     const spike = spikeGroup.create(860, spikeY, "spike");
     spike.setScale(0.10);
     spike.setVelocityX(-gameSpeed);
@@ -163,6 +170,7 @@ function spawnSpike() {
     spike.setOrigin(0.5, 1);
     spike.setDepth(2);
 }
+
 
 
 // ==================================
@@ -178,6 +186,15 @@ function hitSpike(player, spike) {
 
     gameOver = true;
     player.setTint(0xff0000);
+
+    // 🔹 이미 떠 있는 물고기 / 얼음결정 속도 0으로
+    fishGroup.children.iterate(obj => {
+        if (obj && obj.body) obj.setVelocityX(0);
+    });
+
+    spikeGroup.children.iterate(obj => {
+        if (obj && obj.body) obj.setVelocityX(0);
+    });
 
     if (score > highScore) {
         highScore = Math.floor(score);
