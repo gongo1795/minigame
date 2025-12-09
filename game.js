@@ -13,11 +13,8 @@ let gameOver = false;
 let gameSpeed = 220;   // 기본 이동 속도
 let groundTopY = 0;    // 바닥 윗면 y
 
-let fishY = 0;         // 물고기 고정 y
-let spikeY = 0;        // 얼음 결정 고정 y
-
-const FISH_OFFSET = -60; // 펭귄 기준 물고기 위치
-const SPIKE_OFFSET = 5; // 펭귄 기준 얼음 결정 위치
+let fishY = 0;
+let spikeY = 0;
 
 
 // ==================================
@@ -78,13 +75,15 @@ function create() {
     player.setScale(0.22);
     player.setDepth(2);
     player.setCollideWorldBounds(true);
-
+    
     // 바닥 위치를 펭귄 기준으로 아래로 내리기
     ground.y = player.y + 200;
+    
+    // ✅ 여기! 바닥선 기준으로 고정 y 계산
+    fishY  = groundTopY - 40;  // 바닥보다 40px 위 (물고기)
+    spikeY = groundTopY;       // 바닥선 위 (얼음결정이 딱 바닥에 붙음)
 
-    // 물고기 / 얼음 결정 고정 y 계산 (한 번만)
-    fishY  = player.y + FISH_OFFSET;
-    spikeY = player.y + SPIKE_OFFSET;
+    
 
     // 히트박스 정밀 조정
     player.body
