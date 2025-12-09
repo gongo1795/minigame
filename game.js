@@ -81,8 +81,9 @@ function create() {
     // 📌 펭귄이 생성된 다음 위치 다시 계산해 바닥 맞추기
     ground.y = player.y + 200;
 
-    spikeY = groundTopY;        // 얼음결정은 바닥에 딱 붙게
-    fishY  = groundTopY - 55;   // 물고기는 바닥보다 55px 위에 고정
+    fishY  = player.y - 40;                         // 물고기: 펭귄 머리 조금 위
+    spikeY = player.y + player.displayHeight / 2 - 8; // 가시: 펭귄 발 바로 옆
+
 
 
     // 히트박스 정밀 조정
@@ -208,10 +209,9 @@ function spawnSpike() {
     spike.setScale(0.10);
     spike.setVelocityX(-gameSpeed);
     spike.body.allowGravity = false;
-    spike.setOrigin(0.5, 1);  // 아래가 spikeY에 닿도록
+    spike.setOrigin(0.5, 1);
     spike.setDepth(2);
 }
-
 
 
 
