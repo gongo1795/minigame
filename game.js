@@ -10,15 +10,17 @@ let highScore = Number(localStorage.getItem("penguinHighScore") || 0);
 let scoreText, highScoreText, infoText;
 let gameOver = false;
 
-let gameSpeed = 220;   // 기본 이동 속도
-let groundTopY = 0;    // "보이는 바닥"의 윗면 y
+let gameSpeed = 220;
 
-let fishY = 0;         // 물고기 고정 y
-let spikeY = 0;        // 얼음결정 고정 y
+let fishY = 0;
+let spikeY = 0;
 
+// 오프셋(미세 조정값)
+const FISH_OFFSET = 25;   // 물고기는 펭귄보다 약간 위
+const SPIKE_OFFSET = 55;  // 얼음결정은 바닥에 딱 닿게
 
 // ==================================
-// PHASER CONFIG
+// CONFIG
 // ==================================
 const config = {
     type: Phaser.AUTO,
@@ -51,107 +53,68 @@ function preload() {
 // ==================================
 function create() {
 
-    // --- 배경 (스크롤용) ---
+    // 배경
     bg = this.add.tileSprite(400, 300, 800, 600, "sky");
 
-    // ============================
-    // 1) 보이는 바닥
-    //    → 화면보다 살짝 아래로 내려서 밑이 잘리게
-    // ============================
-    ground = this.add.image(400, 770, "ground"); // 🔹 600이 아니라 640 정도로 내려놓기
-    ground.setOrigin(0.5, 1);                    // 아래쪽이 기준
-    ground.setScale(1.4);                        // 아래 꽉 채우기
+    // ⬇️  보이는 바닥 (화면 아래에 절반 숨김)
+    ground = this.add.image(400, 770, "ground");
+    ground.setOrigin(0.5, 1);
+    ground.setScale(1.4);
     ground.setDepth(1);
 
-    // 이 바닥 이미지의 "눈 윗면" y 좌표
-    groundTopY = ground.y - ground.displayHeight;
+    const groundTopY = ground.y - ground.displayHeight + 40; // 눈 윗선
 
-    // ============================
-    // 2) 충돌용 바닥 (보이지 않는 판)
-    // ============================
+    // 충돌용 바닥(보이지 않음)
     groundCollider = this.physics.add.staticImage(400, groundTopY, "ground");
     groundCollider.setScale(1.4);
     groundCollider.refreshBody();
     groundCollider.setVisible(false);
 
-    // --- 펭귄 (눈 윗면 바로 위에 서게) ---
-    player = this.physics.add.sprite(140, groundTopY - 55, "penguin");
+    // 🐧 펭귄
+    player = this.physics.add.sprite(140, groundTopY - 30, "penguin");
     player.setScale(0.15);
     player.setDepth(2);
     player.setCollideWorldBounds(true);
 
-    // 물고기 / 얼음결정 고정 y (눈 윗면 기준)
-    // ✅ 펭귄 위치를 기준으로 고정
-    fishY  = player.y + 80;                       // 펭귄 머리 조금 위
-    spikeY = player.y + player.displayHeight / 2 + 140; // 펭귄 발 바로 옆
+    // 고정 생성 위치 계산
+    fishY  = player.y - FISH_OFFSET;
+    spikeY = player.y + SPIKE_OFFSET;
 
-
-    // 히트박스 조정
+    // 히트박스 수정
     player.body
         .setSize(player.width * 0.45, player.height * 0.75)
         .setOffset(player.width * 0.3, player.height * 0.25);
 
-    // --- 입력 ---
-    cursors    = this.input.keyboard.createCursorKeys();
+    // 입력
+    cursors = this.input.keyboard.createCursorKeys();
     restartKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
-    // --- 그룹 ---
-    fishGroup  = this.physics.add.group();
+    // 그룹
+    fishGroup = this.physics.add.group();
     spikeGroup = this.physics.add.group();
 
-    // --- UI 텍스트 ---
-    scoreText = this.add.text(16, 16, "점수: 0", {
-        fontSize: "28px",
-        fill: "#ffffff"
-    });
+    // UI
+    scoreText = this.add.text(16, 16, "점수: 0", { fontSize: "28px", fill: "#ffffff" });
+    highScoreText = this.add.text(16, 48, `최고 기록: ${highScore}`, { fontSize: "22px", fill: "#ffffaa" });
+    infoText = this.add.text(16, 80, "↑ or SPACE = 점프 | R = 재시작", { fontSize: "18px", fill: "#ffffff" });
 
-    highScoreText = this.add.text(16, 48, `최고 기록: ${highScore}`, {
-        fontSize: "22px",
-        fill: "#ffffaa"
-    });
-
-    infoText = this.add.text(
-        16,
-        80,
-        "↑ 또는 SPACE = 점프   |   R = 재시작",
-        { fontSize: "18px", fill: "#ffffff" }
-    );
-
-    // --- 물리 충돌 & 겹침 ---
+    // 충돌
     this.physics.add.collider(player, groundCollider);
     this.physics.add.overlap(player, fishGroup, collectFish, null, this);
-    this.physics.add.overlap(player, spikeGroup, hitSpike,   null, this);
+    this.physics.add.overlap(player, spikeGroup, hitSpike, null, this);
 
-    // --- 오브젝트 생성 타이머 ---
-    this.time.addEvent({
-        delay: 2400,
-        callback: spawnFish,
-        callbackScope: this,
-        loop: true
-    });
+    // 스폰 타이머
+    this.time.addEvent({ delay: 2400, callback: spawnFish, callbackScope: this, loop: true });
+    this.time.addEvent({ delay: 3000, callback: spawnSpike, callbackScope: this, loop: true });
 
-    this.time.addEvent({
-        delay: 3000,
-        callback: spawnSpike,
-        callbackScope: this,
-        loop: true
-    });
-
-    // --- 난이도 (속도 증가) ---
-    this.time.addEvent({
-        delay: 9000,
-        callback: () => (gameSpeed += 50),
-        loop: true
-    });
+    this.time.addEvent({ delay: 9000, callback: () => (gameSpeed += 50), loop: true });
 }
-
 
 
 // ==================================
 // UPDATE
 // ==================================
 function update(time, delta) {
-    const dt = delta / 1000;
 
     if (gameOver) {
         if (Phaser.Input.Keyboard.JustDown(restartKey)) {
@@ -163,36 +126,26 @@ function update(time, delta) {
         return;
     }
 
-    // 배경만 스크롤 (바닥은 고정)
+    const dt = delta / 1000;
     bg.tilePositionX += gameSpeed * dt;
-
-    // 펭귄은 제자리 (x속도 0)
     player.setVelocityX(0);
 
-    // 점프 (바닥에 닿았을 때만)
-    const isJumpKey = cursors.up.isDown || cursors.space.isDown;
-    if (isJumpKey && (player.body.blocked.down || player.body.touching.down)) {
+    if ((cursors.up.isDown || cursors.space.isDown) && player.body.blocked.down) {
         player.setVelocityY(-460);
     }
 
-    // 점수 증가
     score += 10 * dt;
     scoreText.setText("점수: " + Math.floor(score));
 
-    // 화면 밖으로 나간 오브젝트 제거
     cleanupGroup(fishGroup);
     cleanupGroup(spikeGroup);
 }
 
 
 // ==================================
-// OBJECT SPAWN
+// SPAWN OBJECTS
 // ==================================
-
-// 물고기 (항상 같은 높이)
 function spawnFish() {
-    if (gameOver) return;
-
     const fish = fishGroup.create(860, fishY, "fish");
     fish.setScale(0.10);
     fish.setVelocityX(-gameSpeed);
@@ -200,25 +153,22 @@ function spawnFish() {
     fish.setDepth(2);
 }
 
-// 얼음 결정 (항상 같은 높이, 눈 윗면에 붙이기)
 function spawnSpike() {
-    if (gameOver) return;
-
     const spike = spikeGroup.create(860, spikeY, "spike");
     spike.setScale(0.10);
     spike.setVelocityX(-gameSpeed);
     spike.body.allowGravity = false;
-    spike.setOrigin(0.5, 1);          // 아래쪽이 spikeY에 닿도록
+    spike.setOrigin(0.5, 1);
     spike.setDepth(2);
 }
 
 
 // ==================================
-// COLLISION HANDLERS
+// COLLISION
 // ==================================
 function collectFish(player, fish) {
     fish.destroy();
-    score += 20; // 보너스
+    score += 20;
 }
 
 function hitSpike(player, spike) {
@@ -238,7 +188,7 @@ function hitSpike(player, spike) {
 
 
 // ==================================
-// HELPER
+// CLEANUP
 // ==================================
 function cleanupGroup(group) {
     group.children.iterate(obj => {
