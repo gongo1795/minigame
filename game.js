@@ -76,7 +76,7 @@ function create() {
 
     // --- 펭귄 (눈 윗면 바로 위에 서게) ---
     player = this.physics.add.sprite(140, groundTopY - 30, "penguin");
-    player.setScale(0.22);
+    player.setScale(0.15);
     player.setDepth(2);
     player.setCollideWorldBounds(true);
 
