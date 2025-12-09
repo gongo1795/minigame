@@ -2,8 +2,9 @@
 // GLOBAL
 // ==================================
 let player, cursors, restartKey;
-let bg, ground;
+let bg, ground, groundCollider;   // ← 충돌용 바닥 추가
 let fishGroup, spikeGroup;
+
 let score = 0;
 let highScore = Number(localStorage.getItem("penguinHighScore") || 0);
 let scoreText, highScoreText, infoText;
@@ -46,15 +47,20 @@ function preload() {
 // ==================================
 function create() {
 
-    // --- 배경 (스크롤용 타일) ---
+    // --- 배경 ---
     bg = this.add.tileSprite(400, 300, 800, 600, "sky");
-
-    // 바닥 (화면 전체 가득 반복)
+    
+    // --- 보이기용 바닥(스크롤용) ---
     ground = this.add.tileSprite(400, 520, 800, 120, "ground");
-    this.physics.add.existing(ground, true);
-    ground.setScale(0.6); 
-    ground.refreshBody();
     ground.setDepth(5);
+    
+    // --- 충돌용 바닥 ---
+    groundCollider = this.physics.add.staticImage(400, 520, "ground");
+    groundCollider.setScale(0.6);
+    groundCollider.refreshBody();
+    groundCollider.setVisible(false);
+    groundCollider.setDepth(5);
+
 
 
     // --- 펭귄 ---
@@ -94,7 +100,7 @@ function create() {
     );
 
     // --- 물리 충돌 & 겹침 ---
-    this.physics.add.collider(player, ground);
+    this.physics.add.collider(player, groundCollider);
     // ❌ spikeGroup, ground 충돌 제거 (멈추는 원인)
     // this.physics.add.collider(spikeGroup, ground);
 
