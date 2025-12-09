@@ -51,32 +51,32 @@ function create() {
     // --- 배경 (스크롤용) ---
     bg = this.add.tileSprite(400, 300, 800, 600, "sky");
 
-    // ============================
+        // ============================
     // 1) 충돌용 바닥 (보이지 않는 판)
     // ============================
     groundCollider = this.physics.add.staticImage(400, 460, "ground");
-    //                                ↑ 이 y값으로 전체 높이 조절
     groundCollider.setScale(0.4);
     groundCollider.refreshBody();
     groundCollider.setVisible(false);
-
-    // 이 선이 실제 "바닥 윗면"
     groundTopY = groundCollider.y - groundCollider.displayHeight / 2;
-
-    // ============================
-    // 2) 보이는 바닥 (크게, 아래 조금 잘리게)
-    // ============================
-    ground = this.add.image(400, 630, "ground");
-    ground.setOrigin(0.5, 1);   // 아래쪽이 기준
-    ground.setScale(1.4);       // 화면 아래 꽉 채우기
-    ground.setDepth(1);         // 펭귄보다 뒤
-
-    // --- 펭귄 (반드시 groundTopY 기준!) ---
+    
+    
+    // ===========
+    //— 2) 보이는 바닥 (펭귄 기준으로 위치 자동 맞춤)
+    //=============
+    ground = this.add.image(400, 0, "ground");
+    ground.setScale(1.4);
+    ground.setDepth(1);
+    
+    // 펭귄 생성
     player = this.physics.add.sprite(140, groundTopY - 8, "penguin");
-    //                                      ↑ 펭귄 발 위치
     player.setScale(0.22);
+    player.setDepth(2);
     player.setCollideWorldBounds(true);
-    player.setDepth(2);  // 항상 바닥 위에 보이게
+    
+    // 📌 펭귄이 생성된 다음 위치 다시 계산해 바닥 맞추기
+    ground.y = player.y + 55;  // <── 이 줄이 핵심!!
+
 
     // 히트박스 정밀 조정
     player.body
@@ -182,12 +182,13 @@ function update(time, delta) {
 // OBJECT SPAWN
 // ==================================
 
-// 물고기는 바닥 바로 위쪽
+// 물고기는 펭귄 바로 위쪽에서만 나오게
 function spawnFish() {
     if (gameOver) return;
 
-    const minY = groundTopY - 110;  // 바닥에서 110px 위
-    const maxY = groundTopY - 60;   // 바닥에서 60px 위
+    // 펭귄 y 기준으로 살짝 위쪽 범위
+    const minY = player.y - 70;   // 펭귄에서 70px 위
+    const maxY = player.y - 30;   // 펭귄에서 30px 위
     const y = Phaser.Math.Between(minY, maxY);
 
     const fish = fishGroup.create(860, y, "fish");
@@ -197,17 +198,22 @@ function spawnFish() {
     fish.setDepth(2);
 }
 
-// 얼음 가시는 바닥에 딱 붙이기
+
+// 얼음 가시는 펭귄 발 위치에 맞게
 function spawnSpike() {
     if (gameOver) return;
 
-    const spike = spikeGroup.create(860, groundTopY, "spike");
+    // 펭귄 발 위치 근처 (살짝 위)
+    const spikeY = player.y + player.displayHeight / 2 - 8;
+
+    const spike = spikeGroup.create(860, spikeY, "spike");
     spike.setScale(0.18);
     spike.setVelocityX(-gameSpeed);
     spike.body.allowGravity = false;
-    spike.setOrigin(0.5, 1);  // 아래가 groundTopY에 닿도록
+    spike.setOrigin(0.5, 1);   // 아래쪽이 spikeY에 붙도록
     spike.setDepth(2);
 }
+
 
 
 
